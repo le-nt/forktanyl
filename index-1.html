@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>games · lentanyl.com</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Covered+By+Your+Grace&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; color: #000; font: 14px/1.6 "Courier New", Courier, monospace; background: #000 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23fff'/%3E%3C/svg%3E"); }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid #000; outline-offset: 2px; }
+
+  .menu { position: fixed; inset: 0 0 auto; height: 32px; z-index: 50; background: #fff; border-bottom: 2px solid #000; display: flex; align-items: center; padding: 0 8px; font-weight: bold; }
+  .menu a, .menu button { padding: 0 10px; height: 100%; display: flex; align-items: center; text-decoration: none; color: #000; background: none; border: 0; font-weight: bold; }
+  .menu a:hover, .menu button:hover, .menu a:focus-visible, .menu button:focus-visible { background: #000; color: #fff; outline: none; }
+  .menu .logo { font: 400 28px/1 "Covered By Your Grace", "Comic Sans MS", cursive; text-transform: uppercase; letter-spacing: -.02em; padding-right: 18px; }
+  .menu a[aria-current] { background: #000; color: #fff; }
+  .sp { flex: 1; } #count, #clock { font-weight: normal; font-size: 12px; margin-right: 12px; }
+
+  .desk { height: 100%; padding: 52px 20px 20px; display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
+  .win { background: #fff; border: 2px solid #000; box-shadow: 5px 5px 0 #000; display: flex; flex-direction: column; min-height: 0; }
+  .bar { height: 26px; flex: none; border-bottom: 2px solid #000; display: flex; align-items: center; padding: 0 6px; gap: 6px; user-select: none; background: repeating-linear-gradient(#fff 0 2px, #000 2px 3px); }
+  .bar b { background: #fff; padding: 0 8px; margin: 0 auto; font-size: 13px; }
+  .box { width: 14px; height: 14px; border: 2px solid #000; background: #fff; padding: 0; } .box:hover { background: #000; }
+  .bar::after { content: ""; width: 14px; }
+  .win.shade .body { display: none; } .win.shade { align-self: start; }
+
+  #lib .body { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .search { border: 0; border-bottom: 2px solid #000; padding: 8px 14px; width: 100%; background: #fff; border-radius: 0; }
+  .search:focus { outline: none; background: #000; color: #fff; }
+  .search:focus::placeholder { color: #aaa; }
+  .list { overflow: auto; flex: 1; margin: 0; padding: 0; list-style: none; }
+  .list button { width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid #000; padding: 8px 14px; display: block; }
+  .list .t { font-weight: bold; display: flex; justify-content: space-between; gap: 10px; }
+  .list .tag { font-weight: normal; font-size: 11px; border: 1px solid currentColor; padding: 0 5px; line-height: 1.4; align-self: center; }
+  .list .d { font-size: 12px; display: block; }
+  .list button:hover, .list button:focus-visible, .list button[aria-current="true"] { background: #000; color: #fff; outline: none; }
+  .list button[aria-current="true"] .t::before { content: "> "; position: absolute; margin-left: -14px; }
+  .empty { padding: 14px; font-size: 12px; }
+  .load { flex: none; width: 100%; text-align: left; background: none; border: 0; border-top: 2px solid #000; padding: 6px 14px; font-weight: bold; }
+  .load:hover, .load:focus-visible { background: #000; color: #fff; outline: none; }
+  .list .tag.loc { border-style: dashed; }
+  .panel { max-width: 420px; background: #fff; color: #000; border: 2px solid #000; box-shadow: 5px 5px 0 #000; padding: 14px; text-align: left; font-size: 13px; }
+  .panel p { margin: 0 0 10px; background: none; padding: 0; } .panel p::after { content: none; animation: none; }
+  .panel button { background: #fff; border: 2px solid #000; padding: 2px 12px; margin: 0 6px 6px 0; font-weight: bold; }
+  .panel button:hover, .panel button:focus-visible { background: #000; color: #fff; outline: none; }
+  .panel small { display: block; font-size: 11px; }
+  .src { flex: none; border-top: 2px solid #000; padding: 4px 14px; font-size: 11px; word-break: break-all; }
+
+  #play .body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .tools { flex: none; display: flex; border-bottom: 2px solid #000; }
+  .tools button { background: none; border: 0; border-right: 2px solid #000; padding: 2px 12px; font-size: 12px; }
+  .tools button:hover:not(:disabled), .tools button:focus-visible { background: #000; color: #fff; outline: none; }
+  .tools button:disabled { opacity: .35; cursor: default; }
+  .tools span { flex: 1; min-width: 0; padding: 2px 12px; font-size: 11px; text-align: right; align-self: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stage { flex: 1; min-height: 0; position: relative; background: #000; }
+  .stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+  .hint { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: #fff; padding: 20px;
+    background: #000 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='2' height='2' fill='%23222'/%3E%3C/svg%3E"); }
+  .hint p { margin: 0; background: #000; padding: 2px 10px; }
+  .hint p::after { content: "\2588"; margin-left: 6px; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  #dither { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 100; pointer-events: none; }
+  html.inv { filter: invert(1); }
+
+  @media (max-width: 899px) {
+    html, body { height: auto; }
+    .desk { height: auto; grid-template-columns: 1fr; padding-bottom: 40px; }
+    #lib .list { max-height: 320px; } .stage { height: 62vh; flex: none; } #count, #clock { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+<canvas id="dither" aria-hidden="true"></canvas>
+
+<nav class="menu">
+  <a class="logo" href="/">lentanyl.com</a>
+  <a href="/about">About</a>
+  <a href="/contact">Contact</a>
+  <a href="games.html" aria-current="page">Games</a>
+  <button id="inv" type="button" title="Invert colors (i)">Invert</button>
+  <span class="sp"></span>
+  <span id="count"></span>
+  <span id="clock"></span>
+</nav>
+
+<main class="desk">
+  <section class="win" id="lib">
+    <div class="bar"><button class="box" type="button" aria-label="Collapse window"></button><b>library</b></div>
+    <div class="body">
+      <input class="search" id="q" type="search" placeholder="search..." aria-label="Search games" autocomplete="off">
+      <ul class="list" id="list"></ul>
+      <button class="load" id="loadlocal" type="button" title="Run a game from an .html file on this computer">+ load local game (.html)</button>
+      <input id="pickfile" type="file" accept=".html,.htm,text/html" hidden>
+      <input id="pickdir" type="file" webkitdirectory multiple hidden>
+      <div class="src" id="src"></div>
+    </div>
+  </section>
+
+  <section class="win" id="play">
+    <div class="bar"><button class="box" type="button" aria-label="Collapse window"></button><b id="ptitle">player</b></div>
+    <div class="body">
+      <div class="tools">
+        <button id="fs" type="button" disabled>fullscreen</button>
+        <button id="tab" type="button" disabled>new tab</button>
+        <button id="rl" type="button" disabled>reload</button>
+        <button id="x" type="button" disabled>close</button>
+        <button id="rm" type="button" disabled>remove</button>
+        <span id="pdesc"></span>
+      </div>
+      <div class="stage" id="stage"><div class="hint"><p>pick a game from the library</p></div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ==========================================================================
+   GAMES ARE LOADED AUTOMATICALLY FROM THE SAME FOLDER AS THIS FILE.
+   Every subfolder next to games.html that has an index.html becomes a game.
+   To add a game: drop a new folder (with its index.html) next to this file. That's it.
+
+   This works by reading the web server's folder listing, so it needs a server that
+   shows one (python -m http.server, npx serve, Apache/nginx autoindex, live-server...).
+   If your host hides folder listings (GitHub Pages, Netlify, etc.) or you'd rather
+   list games by hand, put a games.json next to this file, e.g.:
+     ["Baldi Plus", "snake", { "folder": "slope", "title": "Slope", "desc": "roll" }]
+   ========================================================================== */
+const SANDBOX = false;                // true = run games in a restricted frame. Leave false if a game hangs on its loading screen
+const MAXDEPTH = 3;                   // how many folder levels deep to look for a game's index.html
+const EXCLUDE = ["about", "contact", "assets", "css", "js", "img", "images", "fonts", "node_modules"];  // folders to skip
+
+// Optional: nicer names/descriptions, keyed by folder name. Anything not listed gets a name made from its folder.
+const OVERRIDES = {
+  // "Baldi Plus": { title: "Baldi Plus", tag: "CONFIRMED WORKING", desc: "wow" },
+};
+
+// Optional: extra games that live somewhere else (not in this folder).
+const MANUAL = [
+  // { title: "Other Game", path: "https://example.com/game/", tag: "toy", desc: "Hosted elsewhere." },
+];
+
+let GAMES = MANUAL.slice(), loading = true, err = "", srcMsg = "";
+const $ = id => document.getElementById(id);
+// history can be blocked (e.g. inside a preview frame), so never let it break the page
+const setHash = h => { try { history.replaceState(null, "", h); } catch (e) {} };
+const slug = g => g.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+let current = null;
+
+function renderList() {
+  const term = $("q").value.trim().toLowerCase();
+  const shown = GAMES.filter(g => (g.title + " " + (g.tag || "") + " " + (g.desc || "")).toLowerCase().includes(term));
+  const ul = $("list"); ul.textContent = "";
+  $("count").textContent = GAMES.length + " game" + (GAMES.length === 1 ? "" : "s");
+  if (!shown.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = loading ? "looking for games..." : err || (GAMES.length ? "nothing matches." : "no game folders found next to this file yet."); ul.appendChild(li); return; }
+  shown.forEach(g => {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.type = "button"; if (current === g) b.setAttribute("aria-current", "true");
+    const t = document.createElement("span"); t.className = "t"; t.textContent = g.title;
+    if (g.tag) { const s = document.createElement("span"); s.className = "tag" + (g.local ? " loc" : ""); s.textContent = g.tag; t.appendChild(s); }
+    b.appendChild(t);
+    if (g.desc) { const d = document.createElement("span"); d.className = "d"; d.textContent = g.desc; b.appendChild(d); }
+    b.addEventListener("click", () => play(g));
+    li.appendChild(b); ul.appendChild(li);
+  });
+}
+
+function setTools(on) { ["fs", "tab", "rl", "x"].forEach(id => $(id).disabled = !on); $("rm").disabled = !(on && current && current.local); }
+
+function play(g) {
+  current = g;
+  const f = document.createElement("iframe");
+  f.src = g.path; f.title = g.title;
+  f.allow = "fullscreen; gamepad; autoplay; clipboard-write; cross-origin-isolated; accelerometer; gyroscope";
+  if (SANDBOX) f.setAttribute("sandbox", "allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups allow-modals allow-downloads");
+  $("stage").textContent = ""; $("stage").appendChild(f);
+  $("ptitle").textContent = g.title; $("pdesc").textContent = g.path; $("pdesc").title = g.path;
+  document.title = g.title + " · lentanyl.com";
+  setHash("#" + slug(g));
+  setTools(true); renderList(); f.focus();
+}
+
+function close() {
+  current = null;
+  $("stage").innerHTML = '<div class="hint"><p>pick a game from the library</p></div>';
+  $("ptitle").textContent = "player"; $("pdesc").textContent = ""; document.title = "games · lentanyl.com";
+  setHash(location.pathname + location.search);
+  setTools(false); renderList();
+}
+
+$("q").addEventListener("input", renderList);
+$("x").addEventListener("click", close);
+$("rl").addEventListener("click", () => { const f = $("stage").querySelector("iframe"); if (f) f.src = f.src; });
+$("tab").addEventListener("click", () => current && open(current.path, "_blank", "noopener"));
+$("fs").addEventListener("click", () => { const f = $("stage").querySelector("iframe"); if (f && f.requestFullscreen) f.requestFullscreen(); });
+document.querySelectorAll(".win .box").forEach(b => b.addEventListener("click", () => b.closest(".win").classList.toggle("shade")));
+
+const inv = () => document.documentElement.classList.toggle("inv");
+$("inv").addEventListener("click", inv);
+addEventListener("keydown", e => { if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === "i" && e.target.tagName !== "INPUT") inv(); });
+
+const clock = $("clock"), tick = () => clock.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+tick(); setInterval(tick, 1000);
+
+// find game folders (folders containing index.html) by reading the server's folder listing
+const prettify = f => f.split("/").map(x => x.replace(/[-_.]+/g, " ").replace(/\b\w/g, c => c.toUpperCase())).join(" / ");
+const enc = p => p.split("/").map(encodeURIComponent).join("/");
+const base = new URL("./", location.href);
+
+async function exists(url) {
+  try {
+    let r = await fetch(url, { method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(8000) });
+    if (r.status === 405 || r.status === 501) r = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    return r.ok;
+  } catch (e) { return false; }
+}
+
+async function subfolders(rel) {            // rel = "" or "some/folder/"
+  const url = new URL(enc(rel), base);
+  const r = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+  if (!r.ok) return [];
+  const doc = new DOMParser().parseFromString(await r.text(), "text/html");
+  const out = new Set();
+  for (const a of doc.querySelectorAll("a[href]")) {
+    let u; try { u = new URL(a.getAttribute("href"), url); } catch (e) { continue; }
+    if (u.origin !== url.origin || !u.pathname.startsWith(url.pathname) || !u.pathname.endsWith("/")) continue;
+    const tail = u.pathname.slice(url.pathname.length, -1);
+    if (!tail || tail.includes("/")) continue;                 // skip self, parent, and anything not a direct child
+    let name; try { name = decodeURIComponent(tail); } catch (e) { name = tail; }
+    if (name[0] === "." || EXCLUDE.includes(name.toLowerCase())) continue;
+    out.add(name);
+  }
+  return [...out];
+}
+
+async function scan(rel, depth) {           // returns game folders under rel
+  const found = [];
+  const kids = await subfolders(rel);
+  await Promise.all(kids.map(async k => {
+    const p = rel + k + "/";
+    if (await exists(enc(p) + "index.html")) found.push(p.slice(0, -1));
+    else if (depth < MAXDEPTH) found.push(...await scan(p, depth + 1));   // not a game itself, look inside
+  }));
+  return found;
+}
+
+async function manifest() {                 // optional games.json next to this file
+  try {
+    const r = await fetch("games.json", { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return [];
+    const j = await r.json();
+    return (Array.isArray(j) ? j : j.games || []).map(x => typeof x === "string" ? { folder: x } : x).filter(x => x && x.folder);
+  } catch (e) { return []; }
+}
+
+async function discover() {
+  if (location.protocol === "file:") throw new Error("browsers block reading folders from file://. run a local server in this folder (e.g. python -m http.server) and open it from http://localhost:8000/games.html");
+  const [listed, man] = await Promise.all([scan("", 1).catch(() => []), manifest()]);
+  const seen = new Set(), games = [];
+  const add = (folder, extra) => {
+    folder = folder.replace(/^\.?\/+|\/+$/g, "");
+    if (!folder || seen.has(folder)) return; seen.add(folder);
+    games.push(Object.assign({ title: prettify(folder), path: enc(folder) + "/index.html" }, extra || {}, OVERRIDES[folder] || {}));
+  };
+  man.forEach(m => { const { folder, ...rest } = m; add(folder, rest); });
+  listed.sort().forEach(f => add(f));
+  return { games, listing: listed.length > 0, manifest: man.length };
+}
+
+
+/* ---------- local games: pick an .html file (+ its folder) from this computer ----------
+   Files are stored in the browser (Cache API) and served by local-sw.js under ./__local/<id>/,
+   so every dependency (scripts, css, images, audio, wasm, .pck, workers, fetch/XHR) loads normally. */
+const LOCAL_CACHE = "local-games-v1", LOCAL_KEY = "lentanyl.localGames";
+const MIME = { html: "text/html", htm: "text/html", js: "text/javascript", mjs: "text/javascript", css: "text/css", json: "application/json", map: "application/json",
+  wasm: "application/wasm", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", ico: "image/x-icon", avif: "image/avif",
+  mp3: "audio/mpeg", ogg: "audio/ogg", wav: "audio/wav", m4a: "audio/mp4", flac: "audio/flac", mp4: "video/mp4", webm: "video/webm",
+  ttf: "font/ttf", otf: "font/otf", woff: "font/woff", woff2: "font/woff2", txt: "text/plain", xml: "application/xml", pck: "application/octet-stream", data: "application/octet-stream" };
+const mimeOf = f => MIME[(f.name.split(".").pop() || "").toLowerCase()] || f.type || "application/octet-stream";
+const saveLocal = () => { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(GAMES.filter(g => g.local).map(({ title, path, id, desc }) => ({ title, path, id, desc })))); } catch (e) {} };
+const stagePanel = (html, fn) => { const st = $("stage"); st.innerHTML = '<div class="hint"><div class="panel"></div></div>'; const p = st.querySelector(".panel"); p.innerHTML = html; fn && fn(p); };
+const esc = t => t.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+async function ensureSW() {
+  if (!("serviceWorker" in navigator) || !("caches" in window) || !isSecureContext)
+    throw new Error("local games need a secure page (https:// or http://localhost) with service workers. open this page from a server, not from file://");
+  await navigator.serviceWorker.register("local-sw.js", { scope: "./" });
+  await navigator.serviceWorker.ready;
+}
+
+async function storeLocal(entry, files, label) {
+  await ensureSW();
+  const id = Date.now().toString(36), dir = new URL("./__local/" + id + "/", base);
+  const cache = await caches.open(LOCAL_CACHE);
+  let n = 0;
+  for (const [rel, f] of files) {
+    await cache.put(new URL(enc(rel), dir).href, new Response(f, { headers: { "Content-Type": mimeOf(f), "Content-Length": String(f.size) } }));
+    if (++n % 25 === 0) stagePanel("<p>copying files... " + n + " / " + files.length + "</p>");
+  }
+  const title = label || prettify(entry.replace(/\.[^.]+$/, ""));
+  const g = { title, tag: "local", local: true, id, path: "__local/" + id + "/" + enc(entry), desc: files.length + " file" + (files.length === 1 ? "" : "s") };
+  GAMES.push(g); GAMES.sort((x, y) => x.title.localeCompare(y.title)); saveLocal();
+  play(g);
+}
+
+let pendingHtml = null;
+$("loadlocal").addEventListener("click", () => { $("pickfile").value = ""; $("pickfile").click(); });
+
+$("pickfile").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  pendingHtml = f;
+  stagePanel("<p><b>" + esc(f.name) + "</b> selected.</p><p>Most games load other files (scripts, images, audio, data). Select the folder that contains this file so they can all load.</p>" +
+    '<button type="button" id="gofolder">select game folder</button><button type="button" id="gosolo">load file only</button>' +
+    "<small>a game made of just one self-contained .html file works with 'load file only'.</small>", p => {
+    p.querySelector("#gofolder").onclick = () => { $("pickdir").value = ""; $("pickdir").click(); };
+    p.querySelector("#gosolo").onclick = () => storeLocal(f.name, [[f.name, f]]).catch(showErr);
+  });
+});
+
+$("pickdir").addEventListener("change", async e => {
+  const all = [...e.target.files]; if (!all.length || !pendingHtml) return;
+  const picked = pendingHtml;
+  const root = all[0].webkitRelativePath.split("/")[0];
+  const files = all.map(f => [f.webkitRelativePath.split("/").slice(1).join("/") || f.name, f]).filter(([r]) => !r.split("/").some(s => s === ".git"));
+  // find the chosen html inside the folder: same name (+size), shallowest path wins
+  const cands = files.filter(([r, f]) => f.name === picked.name).sort((a, b) => (b[1].size === picked.size) - (a[1].size === picked.size) || a[0].split("/").length - b[0].split("/").length);
+  let entry;
+  if (cands.length) entry = cands[0][0];
+  else { entry = picked.name; files.push([entry, picked]); }
+  const title = /^index\.html?$/i.test(picked.name) ? prettify(root) : prettify(picked.name.replace(/\.[^.]+$/, ""));
+  storeLocal(entry, files, title).catch(showErr);
+});
+
+function showErr(e) { stagePanel("<p>couldn't load: " + esc(e.message || String(e)) + "</p>"); }
+
+$("rm").addEventListener("click", async () => {
+  const g = current; if (!g || !g.local) return;
+  close();
+  try {
+    const cache = await caches.open(LOCAL_CACHE), pre = new URL("./__local/" + g.id + "/", base).href;
+    for (const k of await cache.keys()) if (k.url.startsWith(pre)) await cache.delete(k);
+  } catch (e) {}
+  GAMES = GAMES.filter(x => x !== g); saveLocal(); renderList();
+});
+
+async function restoreLocal() {          // saved local games survive reloads (files live in the browser cache)
+  let saved = []; try { saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]"); } catch (e) {}
+  if (!saved.length || !("caches" in window)) return;
+  try {
+    await ensureSW();
+    const cache = await caches.open(LOCAL_CACHE), keys = (await cache.keys()).map(k => k.url);
+    saved.filter(s => keys.some(u => u.startsWith(new URL("./__local/" + s.id + "/", base).href)))
+      .forEach(s => GAMES.push({ ...s, tag: "local", local: true }));
+    saveLocal();
+  } catch (e) {}
+}
+
+renderList();
+discover().then(({ games, listing, manifest: mc }) => {
+  srcMsg = "./ (this folder) | " + games.length + " game folder" + (games.length === 1 ? "" : "s") + " found" +
+    (!listing && !mc ? " (no folder listing from server and no games.json, see the note at the top of the script)" : "");
+  GAMES = MANUAL.concat(games);
+}).catch(e => { err = e.name === "TimeoutError" ? "server didn't respond in time. reload to retry." : e.message; srcMsg = "./ | " + err; }).then(restoreLocal).finally(() => {
+  GAMES.sort((x, y) => x.title.localeCompare(y.title));
+  loading = false; renderList(); $("src").textContent = srcMsg;
+  const start = GAMES.find(g => slug(g) === location.hash.slice(1));
+  if (start) play(start);   // deep links: games.html#game-title
+});
+
+// subtle full-page Bayer dither overlay + faint vignette (static)
+(() => {
+  const STRENGTH = 0.035, VIGNETTE = 0.12, CELL = 2;
+  const cv = $("dither"), gl = cv.getContext("webgl", { premultipliedAlpha: true });
+  if (!gl) return;
+  const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, "attribute vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }"));
+  gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, `precision highp float; uniform vec2 res; uniform float cell, st, vg;
+    float b2(vec2 a){ a = floor(a); return fract(a.x/2. + a.y*a.y*.75); }
+    float b8(vec2 a){ return ((b2(.25*a)*.25 + b2(.5*a))*.25 + b2(a)); }
+    void main(){
+      vec2 px = floor(gl_FragCoord.xy / cell);
+      float l = b8(px), w = l > .5 ? st : 0., k = l <= .5 ? st : 0.;
+      vec2 u = gl_FragCoord.xy / res - .5;
+      float v = vg * smoothstep(.25, .85, length(u * vec2(1., res.y / res.x * 1.2 + .4)));
+      gl_FragColor = vec4(vec3(w), w + clamp(k + v, 0., 1.));
+    }`));
+  gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return; gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const draw = () => {
+    const d = Math.min(devicePixelRatio || 1, 2);
+    cv.width = innerWidth * d; cv.height = innerHeight * d; gl.viewport(0, 0, cv.width, cv.height);
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(gl.getUniformLocation(pr, "res"), cv.width, cv.height);
+    gl.uniform1f(gl.getUniformLocation(pr, "cell"), CELL * d);
+    gl.uniform1f(gl.getUniformLocation(pr, "st"), STRENGTH);
+    gl.uniform1f(gl.getUniformLocation(pr, "vg"), VIGNETTE);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  };
+  draw(); addEventListener("resize", draw);
+})();
+</script>
+</body>
+</html>
